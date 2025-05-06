@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsDown</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: #f0f2f5;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .chat-bg {
+            background-color: #efeae2;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23d1d5db' fill-opacity='0.2' fill-rule='evenodd'%3E%3C/svg%3E");
+        }
+        
+        .message-bubble {
+            max-width: 75%;
+            border-radius: 7.5px;
+            padding: 8px 12px;
+            position: relative;
+            box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
+        }
+        
+        .message-bubble.sent {
+            background-color: #dcf8c6;
+            margin-left: auto;
+            border-top-right-radius: 0;
+        }
+        
+        .message-bubble.received {
+            background-color: white;
+            margin-right: auto;
+            border-top-left-radius: 0;
+        }
+        
+        .message-time {
+            font-size: 0.7rem;
+            color: #8696a0;
+            margin-top: 2px;
+            float: right;
+            margin-left: 4px;
+        }
+        
+        .contact-item:hover {
+            background-color: #f5f6f6;
+        }
+        
+        .contact-item.active {
+            background-color: #f0f2f5;
+        }
+        
+        .online-indicator {
+            width: 10px;
+            height: 10px;
+            background-color: #25D366;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            border: 2px solid white;
+        }
+        
+        .emoji-picker {
+            display: none;
+            position: absolute;
+            bottom: 60px;
+            left: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            width: 250px;
+            padding: 10px;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 5px;
+        }
+        
+        .emoji-btn {
+            cursor: pointer;
+            font-size: 1.2rem;
+            text-align: center;
+            transition: transform 0.1s;
+        }
+        
+        .emoji-btn:hover {
+            transform: scale(1.2);
+        }
+        
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="flex h-screen bg-white">
+        <!-- Left sidebar - Contacts -->
+        <div class="w-1/3 border-r border-gray-300 flex flex-col">
+            <!-- Header -->
+            <div class="bg-[#008069] text-white p-3">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-xl font-bold">WhatsDown</h1>
+                    <div class="flex space-x-4">
+                        <i class="fas fa-search"></i>
+                        <i class="fas fa-ellipsis-v"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Search bar -->
+            <div class="bg-[#f0f2f5] p-2">
+                <div class="bg-white rounded-lg flex items-center px-3 py-1">
+                    <i class="fas fa-search text-gray-500 mr-2"></i>
+                    <input type="text" placeholder="Search or start new chat" class="w-full outline-none text-sm py-1">
+                </div>
+            </div>
+            
+            <!-- Contacts list -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar" id="contacts-list">
+                <!-- Contacts will be populated by JavaScript -->
+            </div>
+        </div>
+        
+        <!-- Right side - Chat area -->
+        <div class="w-2/3 flex flex-col">
+            <!-- Chat header -->
+            <div class="bg-[#f0f2f5] p-3 border-l border-gray-300 flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="relative mr-3">
+                        <img id="chat-avatar" src="" alt="Profile" class="w-10 h-10 rounded-full">
+                        <span id="chat-online-indicator" class="online-indicator hidden"></span>
+                    </div>
+                    <div>
+                        <h2 id="chat-name" class="font-semibold"></h2>
+                        <p id="chat-status" class="text-xs text-gray-500"></p>
+                    </div>
+                </div>
+                <div class="flex space-x-4 text-gray-600">
+                    <i class="fas fa-search"></i>
+                    <i class="fas fa-paperclip"></i>
+                    <i class="fas fa-ellipsis-v"></i>
+                </div>
+            </div>
+            
+            <!-- Chat messages area -->
+            <div class="flex-1 chat-bg p-4 overflow-y-auto custom-scrollbar" id="chat-messages">
+                <!-- Messages will be populated by JavaScript -->
+                <div class="flex justify-center mb-4">
+                    <div class="bg-white rounded-lg px-3 py-1 text-xs text-gray-500">
+                        Today
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Message input area -->
+            <div class="bg-[#f0f2f5] p-3 relative">
+                <div class="emoji-picker" id="emoji-picker">
+                    <!-- Emojis will be populated by JavaScript -->
+                </div>
+                <div class="flex items-center bg-white rounded-lg px-3 py-2">
+                    <button id="emoji-button" class="text-gray-600 mr-2">
+                        <i class="far fa-smile"></i>
+                    </button>
+                    <input type="text" id="message-input" placeholder="Type a message" class="flex-1 outline-none">
+                    <button id="send-button" class="text-[#008069] ml-2">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Sample data
+        const contacts = [
+            {
+                id: 1,
+                name: "John Smith",
+                avatar: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23008069'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'%3E%3C/svg%3E",
+                lastMessage: "Hey, how's it going?",
+                timestamp: "10:30 AM",
+                unread: 2,
+                online: true,
+                status: "online"
+            },
+            {
+                id: 2,
+                name: "Sarah Johnson",
+                avatar: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23e91e63'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'%3E%3C/svg%3E",
+                lastMessage: "Can you send me the files?",
+                timestamp: "Yesterday",
+                unread: 0,
+                online: true,
+                status: "typing..."
+            },
+            {
+                id: 3,
+                name: "David Wilson",
+                avatar: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233f51b5'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'%3E%3C/svg%3E",
+                lastMessage: "Meeting at 3 PM tomorrow",
+                timestamp: "Yesterday",
+                unread: 0,
+                online: false,
+                status: "last seen today at 2:45 PM"
+            },
+            {
+                id: 4,
+                name: "Emily Brown",
+                avatar: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff9800'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'%3E%3C/svg%3E",
+                lastMessage: "Thanks for your help!",
+                timestamp: "Tuesday",
+                unread: 0,
+                online: false,
+                status: "last seen yesterday at 8:30 PM"
+            },
+            {
+                id: 5,
+                name: "Michael Davis",
+                avatar: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234caf50'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'%3E%3C/svg%3E",
+                lastMessage: "Are we still on for lunch?",
+                timestamp: "Monday",
+                unread: 0,
+                online: true,
+                status: "online"
+            }
+        ];
+
+        // Sample messages for each contact
+        const conversations = {
+            1: [
+                { sent: false, text: "Hey there! How are you?", time: "10:15 AM", read: true },
+                { sent: true, text: "I'm good, thanks! How about you?", time: "10:20 AM", read: true },
+                { sent: false, text: "Doing well. Are you coming to the meeting today?", time: "10:22 AM", read: true },
+                { sent: true, text: "Yes, I'll be there. What time is it again?", time: "10:25 AM", read: true },
+                { sent: false, text: "It's at 2 PM in the main conference room.", time: "10:26 AM", read: true },
+                { sent: false, text: "Don't forget to bring your laptop!", time: "10:26 AM", read: true },
+                { sent: true, text: "Got it, thanks for the reminder!", time: "10:28 AM", read: true },
+                { sent: false, text: "Hey, how's it going?", time: "10:30 AM", read: false }
+            ],
+            2: [
+                { sent: false, text: "Hi! Do you have those project files ready?", time: "Yesterday, 3:45 PM", read: true },
+                { sent: true, text: "I'm still working on them. Should be done by tomorrow.", time: "Yesterday, 4:00 PM", read: true },
+                { sent: false, text: "That works. Can you send them as soon as they're ready?", time: "Yesterday, 4:05 PM", read: true },
+                { sent: true, text: "Sure thing!", time: "Yesterday, 4:10 PM", read: true },
+                { sent: false, text: "Can you send me the files?", time: "Yesterday, 5:30 PM", read: true }
+            ],
+            3: [
+                { sent: true, text: "Hey David, are we still meeting tomorrow?", time: "Yesterday, 1:15 PM", read: true },
+                { sent: false, text: "Yes, 3 PM at the office.", time: "Yesterday, 1:20 PM", read: true },
+                { sent: true, text: "Perfect, I'll be there.", time: "Yesterday, 1:22 PM", read: true },
+                { sent: false, text: "Great! Don't forget to bring the presentation.", time: "Yesterday, 1:25 PM", read: true },
+                { sent: true, text: "I won't. See you tomorrow!", time: "Yesterday, 1:30 PM", read: true },
+                { sent: false, text: "Meeting at 3 PM tomorrow", time: "Yesterday, 5:45 PM", read: true }
+            ],
+            4: [
+                { sent: false, text: "Hi there! I need some help with the report.", time: "Tuesday, 11:30 AM", read: true },
+                { sent: true, text: "Sure, what do you need help with?", time: "Tuesday, 11:45 AM", read: true },
+                { sent: false, text: "I can't get the numbers to add up correctly in section 3.", time: "Tuesday, 11:50 AM", read: true },
+                { sent: true, text: "Let me take a look. I'll check the formulas.", time: "Tuesday, 12:00 PM", read: true },
+                { sent: true, text: "I found the issue. There was an error in cell B17. I'll send you the corrected file.", time: "Tuesday, 12:15 PM", read: true },
+                { sent: false, text: "Thanks for your help!", time: "Tuesday, 12:20 PM", read: true }
+            ],
+            5: [
+                { sent: false, text: "Hey, are we still on for lunch tomorrow?", time: "Monday, 9:15 AM", read: true },
+                { sent: true, text: "Yes, definitely! Where should we go?", time: "Monday, 9:20 AM", read: true },
+                { sent: false, text: "How about that new Italian place downtown?", time: "Monday, 9:25 AM", read: true },
+                { sent: true, text: "Sounds good to me. 12:30?", time: "Monday, 9:30 AM", read: true },
+                { sent: false, text: "Perfect. See you there!", time: "Monday, 9:32 AM", read: true },
+                { sent: false, text: "Are we still on for lunch?", time: "Monday, 5:00 PM", read: true }
+            ]
+        };
+
+        // Emojis for the picker
+        const emojis = ["😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣", "😊", "😇", "🙂", "🙃", "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "😚", "😋", "😛", "😝", "😜", "🤪", "🤨", "🧐", "🤓", "😎", "🤩", "🥳", "😏", "😒", "😞", "😔", "😟", "😕", "🙁", "☹️", "😣", "😖", "😫", "😩", "🥺", "😢", "😭", "😤", "😠", "😡", "🤬", "🤯", "😳", "🥵", "🥶", "😱", "😨", "😰", "😥", "😓", "🤗", "🤔", "🤭", "🤫", "🤥", "😶", "😐", "😑", "😬", "🙄", "😯", "😦", "😧", "😮", "😲", "🥱", "😴", "🤤", "😪", "😵", "🤐", "🥴", "🤢", "🤮", "🤧", "😷", "🤒", "🤕", "🤑", "🤠", "😈", "👿", "👹", "👺", "🤡", "💩", "👻", "💀", "☠️", "👽", "👾", "🤖", "🎃", "😺", "😸", "😹", "😻", "😼", "😽", "🙀", "😿", "😾"];
+
+        // DOM elements
+        const contactsList = document.getElementById('contacts-list');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatName = document.getElementById('chat-name');
+        const chatStatus = document.getElementById('chat-status');
+        const chatAvatar = document.getElementById('chat-avatar');
+        const chatOnlineIndicator = document.getElementById('chat-online-indicator');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const emojiButton = document.getElementById('emoji-button');
+        const emojiPicker = document.getElementById('emoji-picker');
+        let currentContactId = null;
+
+        // Populate contacts list
+        function renderContacts() {
+            contactsList.innerHTML = '';
+            contacts.forEach(contact => {
+                const contactElement = document.createElement('div');
+                contactElement.className = `contact-item p-3 border-b border-gray-200 flex items-center cursor-pointer ${currentContactId === contact.id ? 'active' : ''}`;
+                contactElement.dataset.id = contact.id;
+                contactElement.innerHTML = `
+                    <div class="relative mr-3">
+                        <img src="${contact.avatar}" alt="${contact.name}" class="w-12 h-12 rounded-full">
+                        ${contact.online ? '<span class="online-indicator"></span>' : ''}
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex justify-between">
+                            <h3 class="font-semibold">${contact.name}</h3>
+                            <span class="text-xs text-gray-500">${contact.timestamp}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <p class="text-sm text-gray-600 truncate w-48">${contact.lastMessage}</p>
+                            ${contact.unread > 0 ? `<span class="bg-[#25D366] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">${contact.unread}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+                contactElement.addEventListener('click', () => {
+                    document.querySelectorAll('.contact-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    contactElement.classList.add('active');
+                    loadChat(contact.id);
+                });
+                contactsList.appendChild(contactElement);
+            });
+        }
+
+        // Load chat for a specific contact
+        function loadChat(contactId) {
+            currentContactId = contactId;
+            const contact = contacts.find(c => c.id === contactId);
+
+            // Update chat header
+            chatName.textContent = contact.name;
+            chatStatus.textContent = contact.status;
+            chatAvatar.src = contact.avatar;
+            if (contact.online) {
+                chatOnlineIndicator.classList.remove('hidden');
+            } else {
+                chatOnlineIndicator.classList.add('hidden');
+            }
+            
+            // Clear unread count
+            contact.unread = 0;
+            renderContacts();
+            
+            // Load messages
+            renderMessages(contactId);
+        }
+
+        // Render messages for a specific contact
+        function renderMessages(contactId) {
+            chatMessages.innerHTML = `
+                <div class="flex justify-center mb-4">
+                    <div class="bg-white rounded-lg px-3 py-1 text-xs text-gray-500">
+                        Today
+                    </div>
+                </div>
+            `;
+            const messages = conversations[contactId];
+            messages.forEach(message => {
+                const messageElement = document.createElement('div');
+                messageElement.className = `message-bubble ${message.sent ? 'sent' : 'received'} mb-2`;
+                messageElement.innerHTML = `
+                    <div>${message.text}</div>
+                    <div class="message-time">
+                        ${message.time}
+                        ${message.sent ? (message.read ? '<i class="fas fa-check-double text-blue-500 ml-1 text-xs"></i>' : '<i class="fas fa-check text-gray-400 ml-1 text-xs"></i>') : ''}
+                    </div>
+                `;
+                chatMessages.appendChild(messageElement);
+            });
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Send a new message
+        function sendMessage() {
+            const text = messageInput.value.trim();
+            if (!text || !currentContactId) return;
+            
+            const now = new Date();
+            const timeString = now.getHours() + ':' + (now.getMinutes() < 10 ? '0' : '') + now.getMinutes() + ' ' + (now.getHours() >= 12 ? 'PM' : 'AM');
+            
+            // Add message to conversation
+            conversations[currentContactId].push({
+                sent: true,
+                text: text,
+                time: timeString,
+                read: false
+            });
+            
+            // Update last message in contacts
+            const contactIndex = contacts.findIndex(c => c.id === currentContactId);
+            contacts[contactIndex].lastMessage = text;
+            contacts[contactIndex].timestamp = "Just now";
+            
+            // Clear input and render
+            messageInput.value = '';
+            renderMessages(currentContactId);
+            renderContacts();
+            
+            // Simulate reply after a delay
+            if (Math.random() > 0.5) {
+                setTimeout(() => {
+                    const contact = contacts.find(c => c.id === currentContactId);
+                    if (contact) {
+                        contact.status = "typing...";
+                        chatStatus.textContent = contact.status;
+                        
+                        setTimeout(() => {
+                            const replies = [
+                                "Got it, thanks!",
+                                "Okay, sounds good.",
+                                "I'll get back to you on that.",
+                                "Thanks for letting me know.",
+                                "Perfect!",
+                                "👍",
+                                "Sure thing!"
+                            ];
+                            const replyText = replies[Math.floor(Math.random() * replies.length)];
+                            conversations[currentContactId].push({
+                                sent: false,
+                                text: replyText,
+                                time: timeString,
+                                read: true
+                            });
+                            contact.lastMessage = replyText;
+                            contact.timestamp = "Just now";
+                            contact.status = contact.online ? "online" : "last seen just now";
+                            renderMessages(currentContactId);
+                            renderContacts();
+                            chatStatus.textContent = contact.status;
+                        }, 2000);
+                    }
+                }, 1500);
+            }
+        }
+
+        // Initialize emoji picker
+        function initEmojiPicker() {
+            emojiPicker.innerHTML = '';
+            emojis.forEach(emoji => {
+                const emojiBtn = document.createElement('div');
+                emojiBtn.className = 'emoji-btn';
+                emojiBtn.textContent = emoji;
+                emojiBtn.addEventListener('click', () => {
+                    messageInput.value += emoji;
+                    messageInput.focus();
+                });
+                emojiPicker.appendChild(emojiBtn);
+            });
+        }
+
+        // Event listeners
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        emojiButton.addEventListener('click', () => {
+            if (emojiPicker.style.display === 'grid') {
+                emojiPicker.style.display = 'none';
+            } else {
+                emojiPicker.style.display = 'grid';
+            }
+        });
+        document.addEventListener('click', (e) => {
+            if (!emojiPicker.contains(e.target) && e.target !== emojiButton) {
+                emojiPicker.style.display = 'none';
+            }
+        });
+
+        // Initialize
+        renderContacts();
+        initEmojiPicker();
+        loadChat(1); // Load first contact by default
+    </script>
+</body>
+</html>
